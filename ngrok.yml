@@ -1,0 +1,14 @@
+version: "3"
+agent:
+  # Pega aquí tu authtoken si tienes cuenta ngrok:
+  # authtoken: TU_TOKEN_AQUI
+
+tunnels:
+  cocina:
+    proto: http
+    addr: 8000
+    # Bypass del interstitial de ngrok para requests de APIs externas
+    # Esto evita que el simulador de MercadoPago reciba el HTML de advertencia
+    request_header:
+      add:
+        - "ngrok-skip-browser-warning: 1"

@@ -1,0 +1,396 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Dashboard Admin</title>
+    <!-- Fuentes e Iconos -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Nunito+Sans:wght@400;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <!-- Enlace al archivo CSS separado -->
+    <link rel="stylesheet" href="{% static 'tasks/css/styles.css' %}">
+    
+    <!-- Corrección de alineación del dashboard en escritorio -->
+    <style>
+        @media (min-width: 1024px) {
+            .mobile-header {
+                display: none !important;
+            }
+            .side-nav-bar {
+                display: flex !important;
+                padding-top: var(--space-md) !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="dashboard-body">
+
+    <!-- MOBILE HEADER -->
+    <header class="mobile-header">
+        <div class="header-content">
+            <div class="brand-logo-mobile">
+                <h1>El Buen Sabor</h1>
+                <span class="material-symbols-outlined">
+                    local_fire_department
+                </span>
+            </div>
+
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <a href="{% url 'exportar_pedidos_excel' %}" class="btn-logout"
+                    style="background-color: var(--secondary-container); color: var(--on-surface); cursor: pointer; border: none; font-weight: 800; font-family: inherit; text-decoration: none;"
+                    title="Exportar a Excel">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">download</span>
+                    Exportar Excel
+                </a>
+                <a href="{% url 'logout' %}" class="btn-logout">
+                    <span class="material-symbols-outlined">logout</span>
+                    Cerrar Sesión
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="layout-wrapper">
+        <!-- Sidebar Navigation -->
+        <aside class="side-nav-bar">
+            <!-- Brand Logo inside Sidebar -->
+            <div class="brand-logo-mobile" style="display: flex; align-items: center; gap: 12px; margin-bottom: var(--space-md); padding-bottom: var(--space-sm); border-bottom: 1px solid #f3f4f6;">
+                <h1 style="color: var(--primary-container); font-size: 22px; font-weight: 800; margin: 0;">El Buen Sabor</h1>
+                <span class="material-symbols-outlined" style="color: var(--secondary-container); font-size: 28px;">
+                    local_fire_department
+                </span>
+            </div>
+            
+            <div class="nav-links">
+                <a href="{% url 'dashboard' %}" class="nav-link active">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    Panel de Control
+                </a>
+                <a href="{% url 'exportar_pedidos_excel' %}" class="nav-link">
+                    <span class="material-symbols-outlined">download</span>
+                    Exportar Excel
+                </a>
+                <a href="/admin/" class="nav-link">
+                    <span class="material-symbols-outlined">settings</span>
+                    Administración Django
+                </a>
+            </div>
+            <div class="nav-footer">
+                <a href="{% url 'logout' %}" class="nav-link" style="color: var(--primary);">
+                    <span class="material-symbols-outlined">logout</span>
+                    Cerrar Sesión
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="content-container">
+                <!-- Header Section -->
+                <div class="content-header">
+                    <div>
+                        <h1 class="display-title">El Buen Sabor</h1>
+                        <p class="subtitle">Panel de Control</p>
+                    </div>
+                    <div class="status-wrapper">
+                        <div class="status-card">
+                            <span class="status-label">Estado del Sistema</span>
+                            <div class="status-live">
+                                <span class="live-dot"></span>
+                                <span>ACTIVO</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI Grid -->
+                <div class="kpi-grid">
+                    <!-- Best Selling Dish -->
+                    <div class="card kpi-card group">
+                        <div class="card-accent-blob"></div>
+                        <div class="kpi-card-header">
+                            <div class="icon-box bg-primary">
+                                <span class="material-symbols-outlined text-white">restaurant</span>
+                            </div>
+                            <span class="kpi-label">Plato más vendido</span>
+                        </div>
+                        <div class="kpi-body">
+                            <p class="kpi-value">{{ plato_mas_vendido }}</p>
+                            <div class="kpi-trend trend-up">
+                                <span class="material-symbols-outlined size-16">trending_up</span>
+                                <span>Los preferidos de hoy</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total Revenue Today -->
+                    <div class="card kpi-card">
+                        <div class="kpi-card-header">
+                            <div class="icon-box bg-secondary">
+                                <span class="material-symbols-outlined text-on-secondary">payments</span>
+                            </div>
+                            <span class="kpi-label">Total Vendido Hoy </span>
+                        </div>
+                        <div class="kpi-body">
+                            <p class="kpi-value">S/. {{ total_vendido_hoy|default:0|floatformat:2 }}</p>
+                            <div class="kpi-trend text-primary">
+                                <span class="material-symbols-outlined size-16">equalizer</span>
+                                <span>Ventas del día de hoy</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Average Order Time -->
+                    <div class="card kpi-card">
+                        <div class="kpi-card-header">
+                            <div class="icon-box bg-gray">
+                                <span class="material-symbols-outlined text-primary">timer</span>
+                            </div>
+                            <span class="kpi-label">Tiempo Promedio por Pedido</span>
+                        </div>
+                        <div class="kpi-body">
+                            <p class="kpi-value">{{ tiempo_promedio }}</p>
+                            <div class="kpi-trend trend-up">
+                                <span class="material-symbols-outlined size-16">speed</span>
+                                <span>Eficiencia de entrega</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Active Tables -->
+                    <div class="card kpi-card">
+                        <div class="kpi-card-header">
+                            <div class="icon-box bg-primary">
+                                <span class="material-symbols-outlined text-white">table_restaurant</span>
+                            </div>
+                            <span class="kpi-label">Mesas Activas</span>
+                        </div>
+                        <div class="kpi-body">
+                            <p class="kpi-value">{{ mesas_activas }} / 10</p>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" style="width: {{ mesas_activas_porcentaje }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Dashboard Grid -->
+                <div class="charts-grid">
+                    <!-- Weekly Sales Bar Chart -->
+                    <div class="card chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title" id="chart-main-title">Ventas Semanales</h3>
+                            <div class="btn-toggle-group">
+                                <button class="btn-toggle" id="btn-toggle-diario" onclick="switchChartMode('diario')">Diario</button>
+                                <button class="btn-toggle active" id="btn-toggle-semanal" onclick="switchChartMode('semanal')">Semanal</button>
+                            </div>
+                        </div>
+                        <div class="bar-chart-container">
+                            {% for day in weekly_sales %}
+                            <div class="bar-col">
+                                <div class="bar-bg {% if day.is_today %}active-bar{% endif %}"
+                                    id="bar-day-{{ forloop.index }}"
+                                    data-height-semanal="{{ day.height_sales }}"
+                                    data-height-diario="{{ day.height_orders }}"
+                                    data-title-semanal="S/. {{ day.total|floatformat:2 }}"
+                                    data-title-diario="{{ day.order_count }} pedidos"
+                                    style="height: {{ day.height_sales }}%;"
+                                    title="S/. {{ day.total|floatformat:2 }}">
+                                    <div class="bar-hover-overlay"></div>
+                                </div>
+                                <span class="bar-label {% if day.is_today %}bold{% endif %}">{{ day.label }}</span>
+                            </div>
+                            {% empty %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Top Menu Items List -->
+                    <div class="card top-movers-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">Top Platos Más Vendidos</h3>
+                            <span class="material-symbols-outlined icon-variant">more_vert</span>
+                        </div>
+                        <div class="movers-list">
+                            {% for plato in top_platos %}
+                            <div class="mover-item">
+                                <div class="mover-info">
+                                    <div class="mover-img-box">
+                                        <img class="mover-img" alt="{{ plato.nombre }}" src="{{ plato.img_url }}" />
+                                    </div>
+                                    <div>
+                                        <p class="mover-name">{{ plato.nombre }}</p>
+                                        <p class="mover-sales">{{ plato.total_vendido }} vendidos</p>
+                                    </div>
+                                </div>
+                                <span class="trend-value text-secondary">{{ plato.trend_text }}</span>
+                            </div>
+                            {% empty %}
+                            <div
+                                style="text-align: center; padding: 32px 16px; color: var(--on-surface-variant); font-size: 14px;">
+                                <span class="material-symbols-outlined"
+                                    style="font-size: 32px; opacity: 0.5; margin-bottom: 8px; display: block;">restaurant</span>
+                                No hay datos de ventas disponibles
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <a href="{% url 'dashboard' %}" class="btn-view-more"
+                            style="text-align: center; text-decoration: none; display: block; box-sizing: border-box;">Actualizar
+                            Tablero</a>
+                    </div>
+                </div>
+
+                <!-- Recent Activity Table -->
+                <div class="card table-card">
+                    <div class="table-header">
+                        <h3 class="chart-title">Control de Pedidos</h3>
+                        <div class="table-badges" style="flex-wrap: wrap; gap: 8px;">
+                            <span class="badge-indicator"><span class="dot"
+                                    style="background-color: var(--primary);"></span> {{ cant_nuevos }} Nuevos</span>
+                            <span class="badge-indicator"><span class="dot" style="background-color: #ca8a04;"></span>
+                                {{ cant_preparando }} Preparando</span>
+                            <span class="badge-indicator"><span class="dot" style="background-color: #16a34a;"></span>
+                                {{ cant_listos }} Listos</span>
+                            <span class="badge-indicator"><span class="dot" style="background-color: #2563eb;"></span>
+                                {{ cant_entregados }} Entregados</span>
+                            <span class="badge-indicator"><span class="dot" style="background-color: #ef4444;"></span>
+                                {{ cant_cancelados }} Cancelados</span>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Pedido ID</th>
+                                    <th>Mesa</th>
+                                    <th>Cliente</th>
+                                    <th>Platos</th>
+                                    <th>Estado</th>
+                                    <th>Fecha / Hora</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ped in pedidos_todos %}
+                                <tr>
+                                    <td class="bold">#{{ ped.id }}</td>
+                                    <td>Mesa {{ ped.mesa }}</td>
+                                    <td>
+                                        {% if ped.cliente %}
+                                            <strong style="color: var(--on-surface);">{{ ped.cliente.get_full_name|default:ped.cliente.username }}</strong>
+                                            <span style="display: block; font-size: 12px; color: var(--on-surface-variant); margin-top: 2px;">{{ ped.cliente.email }}</span>
+                                        {% else %}
+                                            <span style="color: var(--on-surface-variant); font-weight: 600; background-color: var(--surface-container); padding: 4px 8px; border-radius: 6px; font-size: 12px;">Invitado</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% for prod in ped.productos.all %}
+                                        {{ prod.nombre }}{% if not forloop.last %}, {% endif %}
+                                        {% empty %}
+                                        Sin productos
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        {% if ped.estado == 'CREADO' %}
+                                        <span class="status-tag"
+                                            style="background-color: var(--secondary-container); color: var(--on-surface);">Creado</span>
+                                        {% elif ped.estado == 'PREPARACION' %}
+                                        <span class="status-tag"
+                                            style="background-color: #fef08a; color: #854d0e;">Preparando</span>
+                                        {% elif ped.estado == 'LISTO' %}
+                                        <span class="status-tag"
+                                            style="background-color: #bbf7d0; color: #166534;">Listo</span>
+                                        {% elif ped.estado == 'ENTREGADO' %}
+                                        <span class="status-tag"
+                                            style="background-color: #dbeafe; color: #1e40af;">Entregado</span>
+                                        {% elif ped.estado == 'COBRADO' %}
+                                        <span class="status-tag"
+                                            style="background-color: #f3e8ff; color: #6b21a8;">Cobrado</span>
+                                        {% elif ped.estado == 'PAGADO' %}
+                                        <span class="status-tag"
+                                            style="background-color: #dcfce7; color: #14532d; font-weight: 700;">✓ Pagado</span>
+                                        {% elif ped.estado == 'CANCELADO' %}
+                                        <span class="status-tag"
+                                            style="background-color: #fee2e2; color: #991b1b;">Cancelado</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-variant">{{ ped.created|date:"d M, g:i a" }}</td>
+                                    <td class="bold">S/. {{ ped.get_total|floatformat:2 }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7"
+                                        style="text-align: center; padding: 48px; color: var(--on-surface-variant);">
+                                        No hay pedidos registrados en el sistema.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- BottomNavBar (Mobile Only) -->
+    <nav class="bottom-nav-bar">
+        <a class="bottom-nav-link active" href="#">
+            <span class="material-symbols-outlined icon-fill">home</span>
+            <span class="text-label-md">Home</span>
+        </a>
+        <a class="bottom-nav-link" href="#">
+            <span class="material-symbols-outlined">list_alt</span>
+            <span class="text-label-md">Orders</span>
+        </a>
+        <a class="bottom-nav-link" href="#">
+            <span class="material-symbols-outlined">restaurant_menu</span>
+            <span class="text-label-md">Menu</span>
+        </a>
+        <a class="bottom-nav-link" href="#">
+            <span class="material-symbols-outlined">person</span>
+            <span class="text-label-md">Profile</span>
+        </a>
+    </nav>
+
+    <script>
+        function switchChartMode(mode) {
+            const btnDiario = document.getElementById('btn-toggle-diario');
+            const btnSemanal = document.getElementById('btn-toggle-semanal');
+            const chartTitle = document.getElementById('chart-main-title');
+            const bars = document.querySelectorAll('.bar-bg');
+            
+            if (mode === 'diario') {
+                btnDiario.classList.add('active');
+                btnSemanal.classList.remove('active');
+                chartTitle.textContent = 'Pedidos Diarios';
+                
+                bars.forEach(bar => {
+                    const heightDiario = bar.getAttribute('data-height-diario');
+                    const titleDiario = bar.getAttribute('data-title-diario');
+                    bar.style.height = heightDiario + '%';
+                    bar.setAttribute('title', titleDiario);
+                });
+            } else {
+                btnSemanal.classList.add('active');
+                btnDiario.classList.remove('active');
+                chartTitle.textContent = 'Ventas Semanales';
+                
+                bars.forEach(bar => {
+                    const heightSemanal = bar.getAttribute('data-height-semanal');
+                    const titleSemanal = bar.getAttribute('data-title-semanal');
+                    bar.style.height = heightSemanal + '%';
+                    bar.setAttribute('title', titleSemanal);
+                });
+            }
+        }
+    </script>
+</body>
+
+</html>

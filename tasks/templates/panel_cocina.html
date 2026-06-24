@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Panel de Cocina - El Buen Sabor</title>
+
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Nunito+Sans:wght@400;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'tasks/css/styles.css' %}">
+
+
+</head>
+
+<body class="dashboard-body">
+
+    <!-- MOBILE HEADER -->
+    <header class="mobile-header">
+        <div class="header-content">
+            <div class="brand-logo-mobile">
+                <h1>El Buen Sabor</h1>
+                <span class="material-symbols-outlined">
+                    local_fire_department
+                </span>
+            </div>
+
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <button onclick="openProductModal()" class="btn-logout"
+                    style="background-color: var(--secondary-container); color: var(--on-surface); cursor: pointer; border: none; font-weight: 800; font-family: inherit;"
+                    title="Añadir Platillo">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">add</span>
+                    Añadir Platillo
+                </button>
+                <a href="{% url 'logout' %}" class="btn-logout" title="Cerrar Sesión" style="text-decoration: none;">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">logout</span>
+                    Cerrar Sesión
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="dashboard-container">
+        <div class="kitchen-grid">
+
+            <!-- COLUMNA 1: NUEVOS -->
+            <div class="kanban-col">
+                <div class="kanban-col-title">
+                    <span>Nuevos ({{ pedidos_creados.count }})</span>
+                    <span class="material-symbols-outlined"
+                        style="color: var(--on-surface-variant);">receipt_long</span>
+                </div>
+
+                {% for pedido in pedidos_creados %}
+                <div class="order-card" style="border-left: 4px solid var(--on-surface-variant);">
+                    <div class="order-header">
+                        <div>
+                            <h3 style="margin: 0; font-size: 18px; font-weight: 800;">Mesa {{ pedido.mesa }}</h3>
+                            <span style="font-size: 12px; color: var(--on-surface-variant);">{{ pedido.created|time:"H:i" }}</span>
+                        </div>
+                    </div>
+                    <ul class="order-products">
+                        {% for prod in pedido.productos.all %}
+                        <li>• {{ prod.nombre }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% if pedido.descripcion %}
+                    <div
+                        style="background: #f8fafc; padding: 8px; border-radius: 8px; font-size: 13px; color: var(--on-surface-variant);">
+                        <strong style="color: var(--on-surface);">Notas:</strong> {{ pedido.descripcion }}
+                    </div>
+                    {% endif %}
+                    <a href="{% url 'update' pedido.id 'PREPARACION' %}" class="action-btn btn-start">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">skillet</span>
+                        Preparar
+                    </a>
+                </div>
+                {% empty %}
+                <div
+                    style="text-align: center; padding: 32px 0; color: var(--on-surface-variant); font-size: 14px; font-weight: 600;">
+                    No hay pedidos nuevos.
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- COLUMNA 2: EN PREPARACIÓN -->
+            <div class="kanban-col">
+                <div class="kanban-col-title">
+                    <span>En Preparación ({{ pedidos_preparacion.count }})</span>
+                    <span class="material-symbols-outlined" style="color: #ca8a04;">skillet</span>
+                </div>
+
+                {% for pedido in pedidos_preparacion %}
+                <div class="order-card" style="border-left: 4px solid #fef08a;">
+                    <div class="order-header">
+                        <div>
+                            <h3 style="margin: 0; font-size: 18px; font-weight: 800;">Mesa {{ pedido.mesa }}</h3>
+                            <span style="font-size: 12px; color: var(--on-surface-variant);">{{ pedido.created|time:"H:i" }}</span>
+                        </div>
+                    </div>
+                    <ul class="order-products">
+                        {% for prod in pedido.productos.all %}
+                        <li>• {{ prod.nombre }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% if pedido.descripcion %}
+                    <div
+                        style="background: #f8fafc; padding: 8px; border-radius: 8px; font-size: 13px; color: var(--on-surface-variant);">
+                        <strong style="color: var(--on-surface);">Notas:</strong> {{ pedido.descripcion }}
+                    </div>
+                    {% endif %}
+                    <div style="display: flex; gap: 8px;">
+                        <a href="{% url 'update' pedido.id 'LISTO' %}" class="action-btn btn-ready" style="flex: 1; text-align: center; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 4px;">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">check_circle</span>
+                            ¡Está Listo!
+                        </a>
+                        <a href="{% url 'update' pedido.id 'CREADO' %}" class="action-btn" style="background-color: var(--outline-variant); color: var(--on-surface-variant); padding: 12px; border-radius: var(--radius-sm); text-decoration: none; display: inline-flex; align-items: center; justify-content: center;" title="Regresar a Creado (Error)">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">undo</span>
+                        </a>
+                    </div>
+                </div>
+                {% empty %}
+                <div
+                    style="text-align: center; padding: 32px 0; color: var(--on-surface-variant); font-size: 14px; font-weight: 600;">
+                    No hay pedidos en cocina.
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- COLUMNA 3: LISTOS -->
+            <div class="kanban-col">
+                <div class="kanban-col-title">
+                    <span>Listos ({{ pedidos_listos.count }})</span>
+                    <span class="material-symbols-outlined" style="color: #16a34a;">room_service</span>
+                </div>
+
+                {% for pedido in pedidos_listos %}
+                <div class="order-card" style="border-left: 4px solid #bbf7d0; opacity: 0.8;">
+                    <div class="order-header">
+                        <div>
+                            <h3 style="margin: 0; font-size: 18px; font-weight: 800;">Mesa {{ pedido.mesa }}</h3>
+                            <span style="font-size: 12px; color: var(--on-surface-variant);">{{ pedido.created|time:"H:i" }}</span>
+                        </div>
+                    </div>
+                    <ul class="order-products" style="color: var(--on-surface-variant);">
+                        {% for prod in pedido.productos.all %}
+                        <li>• {{ prod.nombre }}</li>
+                        {% endfor %}
+                    </ul>
+                    <div
+                        style="text-align: center; font-size: 13px; font-style: italic; color: #166534; font-weight: 700; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                        <span>Esperando al Mozo...</span>
+                        <a href="{% url 'update' pedido.id 'PREPARACION' %}" class="action-btn" style="background-color: var(--outline-variant); color: var(--on-surface-variant); padding: 6px 12px; border-radius: var(--radius-sm); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-style: normal; font-weight: 800; width: auto;" title="Regresar a Preparación (Error)">
+                            <span class="material-symbols-outlined" style="font-size: 14px;">undo</span>
+                            Revertir
+                        </a>
+                    </div>
+                </div>
+                {% empty %}
+                <div
+                    style="text-align: center; padding: 32px 0; color: var(--on-surface-variant); font-size: 14px; font-weight: 600;">
+                    No hay platillos listos esperando.
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- COLUMNA 4: MENÚ CONTROL -->
+            <div class="kanban-col" style="background: white; border: 1px dashed var(--outline-variant);">
+                <div class="kanban-col-title" style="border-bottom-color: var(--outline);">
+                    <span>Disponibilidad Menú</span>
+                    <span class="material-symbols-outlined" style="color: var(--primary);">inventory_2</span>
+                </div>
+
+                <div
+                    style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 70vh; padding-right: 4px;">
+                    {% for producto in productos %}
+                    <div class="menu-item-card" style="display: flex; flex-direction: column; gap: 8px; align-items: stretch;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h4 style="margin: 0; font-size: 14px; font-weight: 800; color: var(--on-surface);">{{ producto.nombre }} - S/. {{ producto.precio }}</h4>
+                            <div style="display: flex; gap: 4px;">
+                                <button onclick="openEditModal('{{ producto.id }}', '{{ producto.nombre|escapejs }}', '{{ producto.precio }}', '{{ producto.disponible }}')" style="background: none; border: none; cursor: pointer; color: var(--on-surface-variant); padding: 4px; display: flex; align-items: center;" title="Editar">
+                                    <span class="material-symbols-outlined" style="font-size: 18px;">edit</span>
+                                </button>
+                                <form action="{% url 'eliminar_producto' producto.id %}" method="POST" style="margin: 0;" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este platillo?');">
+                                    {% csrf_token %}
+                                    <button type="submit" style="background: none; border: none; cursor: pointer; color: var(--primary); padding: 4px; display: flex; align-items: center;" title="Eliminar">
+                                        <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        <a href="{% url 'cambiar_disponibilidad' producto.id %}"
+                            class="toggle-btn {% if producto.disponible %}toggle-active{% else %}toggle-inactive{% endif %}" style="text-align: center;">
+                            {% if producto.disponible %}
+                            Disponible
+                            {% else %}
+                            Agotado
+                            {% endif %}
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- PRODUCT MODAL -->
+    <div id="productModal"
+        style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+        <div
+            style="background: white; border-radius: var(--radius-lg); padding: 32px; width: 100%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h2 style="font-size: 24px; font-weight: 800; color: var(--on-surface); margin: 0;">Añadir Nuevo
+                    Platillo</h2>
+                <button onclick="closeProductModal()"
+                    style="background: transparent; border: none; cursor: pointer; color: var(--on-surface-variant); display: flex; align-items: center; justify-content: center;">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <form action="{% url 'crear_producto' %}" method="POST"
+                style="display: flex; flex-direction: column; gap: 16px;">
+                {% csrf_token %}
+
+                <style>
+                    /* Basic styling for the form fields injected by Django */
+                    #productModal form p,
+                    #editProductForm p {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        margin: 0;
+                        font-weight: 700;
+                        color: var(--on-surface);
+                    }
+
+                    #productModal form input[type="text"],
+                    #productModal form input[type="number"],
+                    #productModal form select,
+                    #productModal form textarea,
+                    #editProductForm input[type="text"],
+                    #editProductForm input[type="number"],
+                    #editProductForm select,
+                    #editProductForm textarea {
+                        padding: 12px 16px;
+                        border-radius: var(--radius-md);
+                        border: 1px solid var(--outline-variant);
+                        font-family: inherit;
+                        font-size: 16px;
+                        background: var(--surface);
+                        width: 100%;
+                        box-sizing: border-box;
+                    }
+
+                    #productModal form input[type="checkbox"],
+                    #editProductForm input[type="checkbox"] {
+                        width: 20px;
+                        height: 20px;
+                    }
+
+                    /* For checkbox to sit next to label */
+                    #productModal form p:has(input[type="checkbox"]),
+                    #editProductForm p:has(input[type="checkbox"]) {
+                        flex-direction: row;
+                        align-items: center;
+                    }
+                </style>
+
+                {{ form_producto.as_p }}
+
+                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px;">
+                    <button type="button" onclick="closeProductModal()"
+                        style="padding: 12px 24px; border-radius: var(--radius-md); border: 1px solid var(--outline-variant); background: white; font-weight: 800; cursor: pointer; color: var(--on-surface-variant); transition: var(--transition-fast);">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                        style="padding: 12px 24px; border-radius: var(--radius-md); border: none; background: var(--primary); color: white; font-weight: 800; cursor: pointer; transition: var(--transition-fast);">
+                        Guardar Producto
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- EDIT PRODUCT MODAL -->
+    <div id="editProductModal"
+        style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+        <div
+            style="background: white; border-radius: var(--radius-lg); padding: 32px; width: 100%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h2 style="font-size: 24px; font-weight: 800; color: var(--on-surface); margin: 0;">Editar Platillo</h2>
+                <button onclick="closeEditModal()"
+                    style="background: transparent; border: none; cursor: pointer; color: var(--on-surface-variant); display: flex; align-items: center; justify-content: center;">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <form id="editProductForm" method="POST" style="display: flex; flex-direction: column; gap: 16px;">
+                {% csrf_token %}
+                
+                <p>
+                    <label for="edit_nombre">Nombre:</label>
+                    <input type="text" name="nombre" id="edit_nombre" maxlength="100" required>
+                </p>
+                <p>
+                    <label for="edit_precio">Precio:</label>
+                    <input type="number" name="precio" id="edit_precio" step="0.01" required>
+                </p>
+                <p style="flex-direction: row; align-items: center;">
+                    <label for="edit_disponible">Disponible:</label>
+                    <input type="checkbox" name="disponible" id="edit_disponible">
+                </p>
+
+                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px;">
+                    <button type="button" onclick="closeEditModal()"
+                        style="padding: 12px 24px; border-radius: var(--radius-md); border: 1px solid var(--outline-variant); background: white; font-weight: 800; cursor: pointer; color: var(--on-surface-variant); transition: var(--transition-fast);">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                        style="padding: 12px 24px; border-radius: var(--radius-md); border: none; background: var(--primary); color: white; font-weight: 800; cursor: pointer; transition: var(--transition-fast);">
+                        Actualizar Producto
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openProductModal() {
+            const modal = document.getElementById('productModal');
+            modal.style.display = 'flex';
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                modal.style.transition = 'opacity 0.2s ease-out';
+            }, 10);
+        }
+
+        function closeProductModal() {
+            const modal = document.getElementById('productModal');
+            modal.style.opacity = '0';
+            setTimeout(() => modal.style.display = 'none', 200);
+        }
+
+        function openEditModal(id, nombre, precio, disponible) {
+            const modal = document.getElementById('editProductModal');
+            const form = document.getElementById('editProductForm');
+            
+            // Llenar datos
+            document.getElementById('edit_nombre').value = nombre;
+            document.getElementById('edit_precio').value = precio.replace(',', '.');
+            document.getElementById('edit_disponible').checked = (disponible === 'True');
+            
+            // Actualizar URL del form
+            form.action = `/producto/${id}/editar/`;
+            
+            // Mostrar modal
+            modal.style.display = 'flex';
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                modal.style.transition = 'opacity 0.2s ease-out';
+            }, 10);
+        }
+
+        function closeEditModal() {
+            const modal = document.getElementById('editProductModal');
+            modal.style.opacity = '0';
+            setTimeout(() => modal.style.display = 'none', 200);
+        }
+    </script>
+</body>
+
+</html>

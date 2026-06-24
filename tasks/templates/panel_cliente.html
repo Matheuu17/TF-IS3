@@ -1,0 +1,717 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Buen Sabor - Dashboard</title>
+
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Nunito+Sans:wght@400;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'tasks/css/styles.css' %}">
+
+    <!-- Custom Styles for Dynamic Elements -->
+    <style>
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                opacity: 0.6;
+            }
+
+            50% {
+                transform: scale(1.15);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(0.95);
+                opacity: 0.6;
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .btn-create-pedido:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(218, 41, 28, 0.45) !important;
+        }
+
+        .btn-create-pedido:active {
+            transform: scale(0.98);
+        }
+
+        .milestone {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .milestone.completed .circle {
+            background-color: #dcfce7 !important;
+            color: #15803d !important;
+            border-color: #15803d !important;
+        }
+
+        .milestone.current .circle {
+            background-color: #fef9c3 !important;
+            color: #a16207 !important;
+            border-color: #a16207 !important;
+        }
+
+        .milestone.disabled .circle {
+            background-color: var(--surface-container-low) !important;
+            color: var(--outline) !important;
+            border-color: var(--outline-variant) !important;
+        }
+
+        .line {
+            transition: background-color 0.5s ease;
+        }
+
+        .line.active {
+            background-color: var(--primary) !important;
+        }
+    </style>
+</head>
+
+<body class="dashboard-body">
+
+    <!-- MOBILE HEADER -->
+    <header class="mobile-header">
+        <div class="header-content">
+            <div class="brand-logo-mobile">
+                <h1>El Buen Sabor</h1>
+                <span class="material-symbols-outlined">
+                    local_fire_department
+                </span>
+            </div>
+
+            <a href="{% url 'logout' %}" class="btn-logout" title="Cerrar Sesión">
+                <span class="material-symbols-outlined" style="font-size: 20px;">logout</span>
+                Cerrar Sesión
+            </a>
+        </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="dashboard-container">
+
+        <!-- PROFILE -->
+        <section class="profile-section">
+
+            <div class="profile-info">
+
+                <div class="profile-image">
+
+                    <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAe8NJoe68Rn-lFMyW0r6zdxsYlobziteYHCxrvTCPk_a-oWZEoW5IctQJi5P91_MqXXCq0N_7Y3NNxV_aaYP8oxUAWMBAEgyzKCKd6gGbJIJlDCPNAAQHfvAC75eAMImAD-_NGch_Er0I5kusbq4D7fmBkbwkSJdFHKjzxgfELNsZxMR70d8M_5JtyqqIHX9dYDuZHv5fvQZA4_DakCmu6vgi7XLH19t_IG6a0vwvqAsFOq0GNzFYeKceta8hYO5QganV68mrxSoHC"
+                        alt="Profile">
+
+                    <div class="badge">
+
+                        <span class="material-symbols-outlined">
+                            military_tech
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div>
+
+                    <h2>
+                        Hola, {{ user.first_name }}! 👋
+                    </h2>
+
+                    <p>
+                        ¿Listo para su pedido de hoy?
+                    </p>
+
+                </div>
+
+            </div>
+
+            <!-- STATS -->
+            <div class="stats-container">
+
+                <div class="stat-card">
+
+                    <p>Ordenes Totales</p>
+
+                    <h3 id="stat-total-pedidos" data-target="{{ total_pedidos|default:0 }}">0</h3>
+
+                </div>
+
+                <div class="stat-card yellow">
+
+                    <p>Bono Points</p>
+
+                    <h3 id="stat-bono-points" data-target="{{ bono_points|default:0 }}">0</h3>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- REWARDS -->
+        <section class="rewards-section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <h3>
+                        Recompensas
+                    </h3>
+
+                    <p id="siguiente-recompensa-texto">
+                        {{ siguiente_recompensa }}
+                    </p>
+
+                </div>
+
+                <span class="material-symbols-outlined trophy">
+                    military_tech
+                </span>
+
+            </div>
+
+            <!-- Visual Progress Bar -->
+            <div class="progress-bar-container"
+                style="background-color: var(--surface-container-low); height: 8px; border-radius: 999px; margin: 16px 0; overflow: hidden; position: relative; border: 1px solid var(--outline-variant);">
+                <div id="progreso-recompensa-bar" class="progress-bar-fill"
+                    style="background: linear-gradient(90deg, var(--secondary-container), var(--primary-container)); height: 100%; width: {{ progreso_porcentaje }}%; border-radius: 999px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);">
+                </div>
+            </div>
+
+            <div class="milestones" id="milestones-container">
+
+                <div class="milestone {% if milestone_100_completed %}completed{% elif milestone_100_current %}current{% else %}disabled{% endif %}"
+                    id="milestone-100">
+
+                    <div class="circle">
+                        <span class="material-symbols-outlined">
+                            {% if milestone_100_completed %}check{% else %}restaurant{% endif %}
+                        </span>
+                    </div>
+
+                    <h4>100 Pts</h4>
+
+                    <p>Papas Fritas Gratis</p>
+
+                </div>
+
+                <div class="line {% if milestone_500_completed or milestone_500_current %}active{% endif %}"
+                    id="line-1"></div>
+
+                <div class="milestone {% if milestone_500_completed %}completed{% elif milestone_500_current %}current{% else %}disabled{% endif %}"
+                    id="milestone-500">
+
+                    <div class="circle">
+                        <span class="material-symbols-outlined">
+                            {% if milestone_500_completed %}check{% else %}local_drink{% endif %}
+                        </span>
+                    </div>
+
+                    <h4>500 Pts</h4>
+
+                    <p>Bebida Fría</p>
+
+                </div>
+
+                <div class="line {% if milestone_1000_completed or milestone_1000_current %}active{% endif %}"
+                    id="line-2"></div>
+
+                <div class="milestone {% if milestone_1000_completed %}completed{% elif milestone_1000_current %}current{% else %}disabled{% endif %}"
+                    id="milestone-1000">
+
+                    <div class="circle">
+                        <span class="material-symbols-outlined">
+                            {% if milestone_1000_completed %}check{% else %}restaurant{% endif %}
+                        </span>
+                    </div>
+
+                    <h4>1000 Pts</h4>
+
+                    <p>Menú de Hamburguesa</p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- CONTENT -->
+        <section class="content-grid">
+
+            <!-- CURRENT ORDER CONTAINER -->
+            <div id="active-order-container" style="display: contents;">
+                {% if active_order %}
+                <!-- CURRENT ORDER -->
+                <div class="order-card">
+
+                    <div class="preparing-badge" id="active-order-badge">
+                        <span class="badge-dot"
+                            style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: {% if active_order.estado == 'LISTO' %}#166534{% else %}#ffc72e{% endif %}; margin-right: 6px; animation: pulse 1.5s infinite;"></span>
+                        <span id="active-order-status">{{ active_order.get_estado_display|upper }}</span>
+                    </div>
+
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <h3 style="margin: 0;">
+                            Orden Actual #{{ active_order.id }}
+                        </h3>
+                        {% if active_order.estado == 'CREADO' %}
+                        <a href="{% url 'cancelar_pedido' active_order.id %}" class="btn-logout"
+                            style="background-color: #ef4444; color: white; border: none; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-size: 13px; padding: 8px 16px; margin: 0;"
+                            onclick="return confirm('¿Estás seguro de que deseas cancelar tu pedido?');">
+                            <span class="material-symbols-outlined" style="font-size: 16px;">cancel</span>
+                            Cancelar Pedido
+                        </a>
+                        {% endif %}
+                    </div>
+
+                    <div class="order-layout">
+
+                        <!-- ORDER LIST -->
+                        <div class="order-items">
+                            <div id="active-order-items-list">
+                                {% for prod in active_order.productos.all %}
+                                <div class="item completed">
+
+                                    <span>
+                                        1x {{ prod.nombre }}
+                                    </span>
+
+                                    <span class="material-symbols-outlined">
+                                        check_circle
+                                    </span>
+
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <div class="timer-box" style="margin-top: auto;">
+
+                                <div class="timer-info">
+
+                                    <span class="material-symbols-outlined">
+                                        timer
+                                    </span>
+
+                                    <div>
+
+                                        <p>
+                                            Listo en:
+                                        </p>
+
+                                        <h4 id="active-order-timer">
+                                            {{ tiempo_estimado }}
+                                        </h4>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <!-- SIDE CARD -->
+                        <div class="chef-card">
+
+                            <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUyHxgB-2d28GBuLkqEwA3ClRygTefnu6IrftID_GnTAZizRgId3gkidLBXPNvg3G6MlF_YcUEBsDpVaQSe7jwuURWGFPVhAdXvNL0Em6YqmygbpVh5aUMGwxHq65xR9ADQNmg5KpcgzqnRl2hCBGMWToPWgNETdwRnhF5Ygkaum2ZNHtfEIpF6w3EgFDw_q8jsyJQctoY80QyTqgGkT8YPrMrtxOmydjvaWP3-tChwDuJlu1Pqw6Ns6gCf4249K7KIJBbNyZULcLk"
+                                alt="Burger">
+
+                            <p id="active-order-chef-message">
+                                {{ chef_message }}
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+                {% else %}
+                <!-- EMPTY ACTIVE ORDER (PREMIUM DESIGN) -->
+                <div class="order-card empty-order-card"
+                    style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 48px 24px; min-height: 320px; background-color: var(--surface-container-lowest); border: 1px solid var(--outline-variant); border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
+                    <div
+                        style="background-color: var(--surface-container-low); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; border: 1px solid var(--outline-variant);">
+                        <span class="material-symbols-outlined" style="font-size: 38px; color: var(--primary);">
+                            restaurant_menu
+                        </span>
+                    </div>
+                    <h3 style="font-size: 22px; font-weight: 800; color: var(--on-surface); margin-bottom: 8px;">¿Con
+                        hambre hoy?</h3>
+                    <p
+                        style="color: var(--on-surface-variant); font-size: 15px; margin-bottom: 24px; max-width: 320px; line-height: 1.5;">
+                        No tienes ningún pedido en preparación. ¡Anímate a probar nuestras deliciosas especialidades!
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- HISTORY -->
+            <div class="history-card">
+
+                <div class="history-header">
+
+                    <h3>
+                        Historial
+                    </h3>
+
+                    <button class="history-ver-todo-btn"
+                        style="background: none; border: none; color: var(--primary); font-weight: 700; cursor: pointer;">
+                        Ver Todo
+                    </button>
+
+                </div>
+
+                <div class="history-list" id="history-list-container">
+                    {% for pedido in historial_pedidos %}
+                    <div class="history-item">
+
+                        <div class="history-top">
+
+                            <span>
+                                {{ pedido.datecompleted|date:"M d, g:i A"|upper }}
+                            </span>
+
+                            <strong>
+                                S/. {{ pedido.get_total|floatformat:2 }}
+                            </strong>
+
+                        </div>
+
+                        <h4>
+                            {% for prod in pedido.productos.all %}
+                            {{ prod.nombre }}{% if not forloop.last %}, {% endif %}
+                            {% empty %}
+                            Sin productos
+                            {% endfor %}
+                        </h4>
+
+                        <p>
+                            Entregado • {{ pedido.get_puntos }} Puntos Ganados
+                        </p>
+
+                    </div>
+                    {% empty %}
+                    <div class="history-empty"
+                        style="text-align: center; padding: 48px 16px; color: var(--on-surface-variant);">
+                        <span class="material-symbols-outlined"
+                            style="font-size: 40px; margin-bottom: 12px; opacity: 0.5;">history</span>
+                        <p style="font-size: 15px;">Aún no has completado ningún pedido.</p>
+                    </div>
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Count-up and AJAX polling JavaScript -->
+    <script>
+        // Configuración y variables de estado del contador
+        let currentTotalPedidos = 0;
+        let currentBonoPoints = 0;
+
+        // Función de animación para contadores fluidos
+        function animateValue(id, start, end, duration) {
+            const obj = document.getElementById(id);
+            if (!obj) return;
+            if (start === end) {
+                obj.textContent = end.toLocaleString();
+                return;
+            }
+
+            const range = end - start;
+            const startTime = performance.now();
+
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                // Ease out quad
+                const ease = progress * (2 - progress);
+                const value = Math.floor(ease * range + start);
+                obj.textContent = value.toLocaleString();
+
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                } else {
+                    obj.textContent = end.toLocaleString();
+                }
+            }
+            requestAnimationFrame(update);
+        }
+
+        // Inicializar contadores al cargar la página
+        document.addEventListener("DOMContentLoaded", () => {
+            const ordersEl = document.getElementById("stat-total-pedidos");
+            const pointsEl = document.getElementById("stat-bono-points");
+
+            const targetOrders = parseInt(ordersEl.getAttribute("data-target") || "0", 10);
+            const targetPoints = parseInt(pointsEl.getAttribute("data-target") || "0", 10);
+
+            animateValue("stat-total-pedidos", 0, targetOrders, 1200);
+            animateValue("stat-bono-points", 0, targetPoints, 1500);
+
+            currentTotalPedidos = targetOrders;
+            currentBonoPoints = targetPoints;
+
+            // Iniciar el polling periódico cada 5 segundos
+            setInterval(fetchLatestStats, 5000);
+        });
+
+        // Función que realiza la petición AJAX en segundo plano
+        function fetchLatestStats() {
+            fetch("?ajax=true")
+                .then(response => {
+                    if (!response.ok) throw new Error("Network response was not ok");
+                    return response.json();
+                })
+                .then(data => {
+                    updateDashboard(data);
+                })
+                .catch(error => console.error("Error al actualizar estadísticas:", error));
+        }
+
+        // Actualiza todos los elementos del DOM con la nueva información del servidor
+        function updateDashboard(data) {
+            // 1. Actualizar Estadísticas (solo si han cambiado)
+            if (data.total_pedidos !== currentTotalPedidos) {
+                animateValue("stat-total-pedidos", currentTotalPedidos, data.total_pedidos, 1000);
+                currentTotalPedidos = data.total_pedidos;
+            }
+            if (data.bono_points !== currentBonoPoints) {
+                animateValue("stat-bono-points", currentBonoPoints, data.bono_points, 1200);
+                currentBonoPoints = data.bono_points;
+            }
+
+            // 2. Actualizar Sección de Recompensas
+            const recompensaTexto = document.getElementById("siguiente-recompensa-texto");
+            if (recompensaTexto && recompensaTexto.textContent.trim() !== data.siguiente_recompensa) {
+                recompensaTexto.textContent = data.siguiente_recompensa;
+            }
+
+            const progressBar = document.getElementById("progreso-recompensa-bar");
+            if (progressBar) {
+                progressBar.style.width = data.progreso_porcentaje + "%";
+            }
+
+            // Actualizar estados visuales de los hitos (milestones)
+            updateMilestone("milestone-100", data.milestones.m100_completed, data.milestones.m100_current, "check", "restaurant");
+            updateMilestone("milestone-500", data.milestones.m500_completed, data.milestones.m500_current, "check", "local_drink");
+            updateMilestone("milestone-1000", data.milestones.m1000_completed, data.milestones.m1000_current, "check", "restaurant");
+
+            // Actualizar las líneas conectoras
+            const line1 = document.getElementById("line-1");
+            if (line1) {
+                if (data.milestones.m500_completed || data.milestones.m500_current) {
+                    line1.classList.add("active");
+                } else {
+                    line1.classList.remove("active");
+                }
+            }
+            const line2 = document.getElementById("line-2");
+            if (line2) {
+                if (data.milestones.m1000_completed || data.milestones.m1000_current) {
+                    line2.classList.add("active");
+                } else {
+                    line2.classList.remove("active");
+                }
+            }
+
+            // 3. Actualizar Orden Activa
+            const activeOrderContainer = document.getElementById("active-order-container");
+            if (activeOrderContainer) {
+                if (data.active_order) {
+                    // Caso: Hay orden activa
+                    const activeBadge = document.getElementById("active-order-badge");
+                    const activeStatus = document.getElementById("active-order-status");
+                    const activeTimer = document.getElementById("active-order-timer");
+                    const activeChefMsg = document.getElementById("active-order-chef-message");
+                    const activeItemsList = document.getElementById("active-order-items-list");
+
+                    // Si la tarjeta ya existe en el DOM, actualizamos sus campos
+                    const existingOrderCard = activeOrderContainer.querySelector(".order-card");
+                    if (existingOrderCard && !existingOrderCard.classList.contains("empty-order-card")) {
+                        // Actualizar estado del badge
+                        if (activeStatus && activeStatus.textContent.trim() !== data.active_order.estado_display.toUpperCase()) {
+                            activeStatus.textContent = data.active_order.estado_display.toUpperCase();
+                            const dot = activeBadge.querySelector(".badge-dot");
+                            if (dot) {
+                                dot.style.backgroundColor = (data.active_order.estado === 'LISTO') ? '#166534' : '#ffc72e';
+                            }
+                        }
+                        // Actualizar estimación de tiempo
+                        if (activeTimer && activeTimer.textContent.trim() !== data.active_order.tiempo_estimado) {
+                            activeTimer.textContent = data.active_order.tiempo_estimado;
+                        }
+                        // Actualizar mensaje del chef
+                        if (activeChefMsg && activeChefMsg.textContent.trim() !== data.active_order.chef_message) {
+                            activeChefMsg.textContent = data.active_order.chef_message;
+                        }
+                        // Actualizar lista de productos
+                        if (activeItemsList) {
+                            let newItemsHTML = "";
+                            data.active_order.productos.forEach(prod => {
+                                newItemsHTML += `
+                                    <div class="item completed">
+                                        <span>1x ${prod}</span>
+                                        <span class="material-symbols-outlined">check_circle</span>
+                                    </div>
+                                `;
+                            });
+                            if (activeItemsList.innerHTML.trim() !== newItemsHTML.trim()) {
+                                activeItemsList.innerHTML = newItemsHTML;
+                            }
+                        }
+                    } else {
+                        // Si no existía la tarjeta de orden activa (ej. acababa de crearse), renderizarla completa
+                        let itemsHTML = "";
+                        data.active_order.productos.forEach(prod => {
+                            itemsHTML += `
+                                <div class="item completed">
+                                    <span>1x ${prod}</span>
+                                    <span class="material-symbols-outlined">check_circle</span>
+                                </div>
+                            `;
+                        });
+
+                        activeOrderContainer.innerHTML = `
+                            <div class="order-card" style="animation: slideDown 0.4s ease-out;">
+                                <div class="preparing-badge" id="active-order-badge">
+                                    <span class="badge-dot" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: ${data.active_order.estado === 'LISTO' ? '#166534' : '#ffc72e'}; margin-right: 6px; animation: pulse 1.5s infinite;"></span>
+                                    <span id="active-order-status">${data.active_order.estado_display.toUpperCase()}</span>
+                                </div>
+                                <h3>Orden Actual #${data.active_order.id}</h3>
+                                <div class="order-layout">
+                                    <div class="order-items">
+                                        <div id="active-order-items-list">${itemsHTML}</div>
+                                        <div class="timer-box" style="margin-top: auto;">
+                                            <div class="timer-info">
+                                                <span class="material-symbols-outlined">timer</span>
+                                                <div>
+                                                    <p>Listo en:</p>
+                                                    <h4 id="active-order-timer">${data.active_order.tiempo_estimado}</h4>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="chef-card">
+                                        <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUyHxgB-2d28GBuLkqEwA3ClRygTefnu6IrftID_GnTAZizRgId3gkidLBXPNvg3G6MlF_YcUEBsDpVaQSe7jwuURWGFPVhAdXvNL0Em6YqmygbpVh5aUMGwxHq65xR9ADQNmg5KpcgzqnRl2hCBGMWToPWgNETdwRnhF5Ygkaum2ZNHtfEIpF6w3EgFDw_q8jsyJQctoY80QyTqgGkT8YPrMrtxOmydjvaWP3-tChwDuJlu1Pqw6Ns6gCf4249K7KIJBbNyZULcLk" alt="Chef">
+                                        <p id="active-order-chef-message">${data.active_order.chef_message}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                } else {
+                    // Caso: No hay orden activa (mostrar el estado vacío premium)
+                    const existingEmptyCard = activeOrderContainer.querySelector(".empty-order-card");
+                    if (!existingEmptyCard) {
+                        activeOrderContainer.innerHTML = `
+                            <div class="order-card empty-order-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 48px 24px; min-height: 320px; background-color: var(--surface-container-lowest); border: 1px solid var(--outline-variant); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); animation: slideDown 0.4s ease-out;">
+                                <div style="background-color: var(--surface-container-low); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; border: 1px solid var(--outline-variant);">
+                                    <span class="material-symbols-outlined" style="font-size: 38px; color: var(--primary);">
+                                        restaurant_menu
+                                    </span>
+                                </div>
+                                <h3 style="font-size: 22px; font-weight: 800; color: var(--on-surface); margin-bottom: 8px;">¿Con hambre hoy?</h3>
+                                <p style="color: var(--on-surface-variant); font-size: 15px; margin-bottom: 24px; max-width: 320px; line-height: 1.5;">
+                                    No tienes ningún pedido en preparación. ¡Anímate a probar nuestras deliciosas especialidades!
+                                </p>
+                                <a href="/pedidos/create/" class="btn-create-pedido" style="background: linear-gradient(135deg, var(--primary-container), var(--primary)); color: white; padding: 14px 28px; border-radius: var(--radius-md); font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: all var(--transition-fast); box-shadow: 0 4px 14px rgba(218, 41, 28, 0.3);">
+                                    <span class="material-symbols-outlined" style="font-size: 20px;">shopping_bag</span>
+                                    Hacer un Pedido
+                                </a>
+                            </div>
+                        `;
+                    }
+                }
+            }
+
+            // 4. Actualizar Historial de Compras
+            const historyContainer = document.getElementById("history-list-container");
+            if (historyContainer) {
+                if (data.historial && data.historial.length > 0) {
+                    let historyHTML = "";
+                    data.historial.forEach(ped => {
+                        historyHTML += `
+                            <div class="history-item">
+                                <div class="history-top">
+                                    <span>${ped.datecompleted.toUpperCase()}</span>
+                                    <strong>S/. ${parseFloat(ped.total).toFixed(2)}</strong>
+                                </div>
+                                <h4>${ped.productos_str || "Sin productos"}</h4>
+                                <p>Entregado • ${ped.puntos} Puntos Ganados</p>
+                            </div>
+                        `;
+                    });
+                    if (historyContainer.innerHTML.includes("history-empty") || historyContainer.children.length !== data.historial.length) {
+                        historyContainer.innerHTML = historyHTML;
+                    }
+                } else {
+                    if (!historyContainer.querySelector(".history-empty")) {
+                        historyContainer.innerHTML = `
+                            <div class="history-empty" style="text-align: center; padding: 48px 16px; color: var(--on-surface-variant);">
+                                <span class="material-symbols-outlined" style="font-size: 40px; margin-bottom: 12px; opacity: 0.5;">history</span>
+                                <p style="font-size: 15px;">Aún no has completado ningún pedido.</p>
+                            </div>
+                        `;
+                    }
+                }
+            }
+        }
+
+        // Utilidad para cambiar las clases CSS e iconos de hitos
+        function updateMilestone(id, completed, current, iconCompleted, iconDefault) {
+            const el = document.getElementById(id);
+            if (!el) return;
+
+            // Remover clases previas
+            el.classList.remove("completed", "current", "disabled");
+
+            // Asignar clase correcta
+            if (completed) {
+                el.classList.add("completed");
+            } else if (current) {
+                el.classList.add("current");
+            } else {
+                el.classList.add("disabled");
+            }
+
+            // Cambiar icono
+            const iconSpan = el.querySelector(".circle span");
+            if (iconSpan) {
+                const expectedIcon = completed ? iconCompleted : iconDefault;
+                if (iconSpan.textContent.trim() !== expectedIcon) {
+                    iconSpan.textContent = expectedIcon;
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

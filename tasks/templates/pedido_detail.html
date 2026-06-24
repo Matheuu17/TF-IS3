@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-8">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div class="bg-gradient-to-r from-gray-700 to-gray-900 p-6 text-white text-center flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold"><i class="fa-solid fa-pen-to-square mr-2"></i> Editar Pedido #{{pedido.id}}</h1>
+            </div>
+            <span class="px-3 py-1 bg-white/20 rounded-full text-sm">{{ pedido.estado }}</span>
+        </div>
+
+        <div class="p-8">
+            <form method="post" action="{% url 'pedido_detail' pedido.id %}" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- Cliente Field -->
+                <div>
+                    <label for="{{ form.cliente.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cliente (Opcional)</label>
+                    {{ form.cliente }}
+                </div>
+
+                <!-- Mesa Field -->
+                <div>
+                    <label for="{{ form.mesa.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mesa</label>
+                    {{ form.mesa }}
+                </div>
+
+                <!-- Productos Field -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Productos Disponibles</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700">
+                        {% for checkbox in form.productos %}
+                        <div class="flex items-start bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm">
+                            <div class="flex items-center h-5">
+                                {{ checkbox.tag }}
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <label for="{{ checkbox.id_for_label }}" class="font-medium text-gray-700 dark:text-gray-300">{{ checkbox.choice_label }}</label>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Descripcion Field -->
+                <div>
+                    <label for="{{ form.descripcion.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notas</label>
+                    {{ form.descripcion }}
+                </div>
+
+                <div class="pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-end">
+                    <button type="submit" class="bg-gray-800 hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg w-full sm:w-auto">
+                        Actualizar Pedido
+                    </button>
+                </div>
+            </form>
+
+            <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row gap-4 justify-between">
+                <form method="post" action="{% url 'delete_pedido' pedido.id %}" class="w-full sm:w-auto" onsubmit="return confirm('¿Estás seguro de eliminar este pedido?');">
+                    {% csrf_token %}
+                    <button type="submit" class="w-full sm:w-auto bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-900/30 dark:hover:bg-red-800/50 dark:text-red-400 px-6 py-2 rounded-lg font-medium transition-colors">
+                        <i class="fa-solid fa-trash mr-2"></i> Eliminar
+                    </button>
+                </form>
+                
+                <a href="{% url 'dashboard' %}" class="w-full sm:w-auto text-center px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300 rounded-lg font-medium transition-colors">
+                    Volver al Panel
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

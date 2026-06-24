@@ -1,0 +1,93 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Login - El Buen Sabor</title>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Nunito+Sans:wght@400;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <link rel="stylesheet" href="{% static 'tasks/css/styles.css' %}" />
+</head>
+
+<body>
+
+    <div class="bg-decorations">
+        <div class="decor-blob-1"></div>
+        <div class="decor-blob-2"></div>
+    </div>
+
+    <main class="auth-wrapper">
+
+        <div class="brand-header">
+            <div class="brand-logo-row">
+                <span class="material-symbols-outlined brand-logo-icon">restaurant_menu</span>
+                <h1 class="brand-title">El Buen Sabor</h1>
+            </div>
+            <h2 class="brand-welcome-text">Bienvenido de vuelta!</h2>
+            <p class="brand-subtitle">Inicie sesión para continuar</p>
+        </div>
+
+        <div class="auth-card">
+            <form action="#" method="POST">
+                {% csrf_token %}
+
+                {% if error %}
+                <div class="alert-error">
+                    <span class="material-symbols-outlined">error</span>
+                    {{ error }}
+                </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label class="form-label" for="email">Correo Electrónico</label>
+                    <div class="input-container">
+                        <span class="material-symbols-outlined">mail</span>
+                        <input class="form-control" id="email" name="email" placeholder="ejemplo@gmail.com" type="email"
+                            required />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">Contraseña</label>
+                    <div class="input-container">
+                        <span class="material-symbols-outlined">lock</span>
+                        <input class="form-control" id="password" name="password" placeholder="••••••••" type="password"
+                            required />
+                        <button class="btn-toggle-password" type="button">
+                            <span class="material-symbols-outlined">visibility</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-options">
+                    <a class="link-primary" href="#">Olvidó tu contraseña?</a>
+                </div>
+
+                <button class="btn-submit" type="submit">
+                    <span>Iniciar Sesión</span>
+                </button>
+            </form>
+
+            <div class="auth-card-footer">
+                <p>
+                    No tienes una cuenta?
+                    <a class="link-primary sign-up-link" href="/signup"> Registrese</a>
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <button class="fab-support" type="button">
+        <span class="material-symbols-outlined">help_center</span>
+    </button>
+
+</body>
+
+</html>

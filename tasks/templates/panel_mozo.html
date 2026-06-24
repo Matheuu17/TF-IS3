@@ -1,0 +1,601 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EBS - Panel Mozo</title>
+
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Nunito+Sans:wght@400;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'tasks/css/styles.css' %}?v=1.4">
+
+</head>
+
+<body class="dashboard-body">
+
+    <!-- TOAST PAGO EXITOSO -->
+    <div id="pagoExitosoToast"
+        style="display: none; position: fixed; top: 24px; left: 50%; transform: translateX(-50%); background-color: #22c55e; color: white; padding: 16px 32px; border-radius: 50px; font-weight: 800; font-size: 16px; z-index: 9999; box-shadow: 0 10px 25px rgba(34, 197, 94, 0.4); align-items: center; gap: 8px; justify-content: center;">
+        <span class="material-symbols-outlined" style="font-size: 24px;">check_circle</span>
+        <span>Pago Exitoso</span>
+    </div>
+
+    <!-- MOBILE HEADER -->
+    <header class="mobile-header">
+        <div class="header-content">
+            <div class="brand-logo-mobile">
+                <h1>El Buen Sabor</h1>
+                <span class="material-symbols-outlined">
+                    local_fire_department
+                </span>
+            </div>
+
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <button onclick="openOrderModal()" class="btn-action-secondary" title="Nueva Orden">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">add</span>
+                    Nueva Orden
+                </button>
+                <a href="{% url 'logout' %}" class="btn-action-logout" title="Cerrar Sesión">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">logout</span>
+                    Cerrar Sesión
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="dashboard-container">
+
+        <!-- CONTENT -->
+        <!-- CONTENT -->
+
+        <div class="waiter-grid">
+            <!-- COLUMN 1: TABLES -->
+            <div>
+                <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 20px; color: var(--on-surface);">Mesas</h2>
+                <div class="tables-container">
+                    {% for mesa in mesas_data %}
+                    <div class="table-btn {% if mesa.ocupada %}occupied{% else %}available{% endif %}"
+                        onclick="handleTableClick({{ mesa.numero }}, {% if mesa.ocupada %}true{% else %}false{% endif %})"
+                        title="{% if mesa.ocupada %}Mesa {{ mesa.numero }} Ocupada - Ver detalles{% else %}Mesa {{ mesa.numero }} Disponible - Nueva Orden{% endif %}">
+                        <span class="material-symbols-outlined" style="font-size: 32px; margin-bottom: 8px;">
+                            deck
+                        </span>
+                        Mesa {{ mesa.numero }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- COLUMN 2: ACTIVE ORDERS / HISTORY -->
+            <div>
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                    <h2 style="font-size: 24px; font-weight: 800; color: var(--on-surface); margin: 0;">
+                        {% if is_history %}Historial de Pedidos{% else %}Pedidos Activos{% endif %}
+                    </h2>
+                    <div style="display: flex; gap: 8px;">
+                        <a href="{% url 'dashboard' %}"
+                            class="tab-button {% if not is_history %}active{% else %}inactive{% endif %}">
+                            Activos
+                        </a>
+                        <a href="{% url 'pedidos_completed' %}"
+                            class="tab-button {% if is_history %}active{% else %}inactive{% endif %}">
+                            Historial
+                        </a>
+                    </div>
+                </div>
+                <div class="orders-container">
+                    {% for pedido in pedidos %}
+                    <div class="order-card">
+                        <div class="order-header">
+                            <div>
+                                <h3 style="font-size: 22px; font-weight: 800; margin: 0;">Mesa {{ pedido.mesa }}</h3>
+                                <span
+                                    style="color: var(--on-surface-variant); font-size: 14px; font-weight: 600;">Creado
+                                    a las {{ pedido.created|time:"H:i" }} - Cliente: {{ pedido.cliente }}</span>
+                            </div>
+                            <span class="status-badge status-{{ pedido.estado }}">
+                                {{ pedido.estado }}
+                            </span>
+                        </div>
+
+                        <ul class="order-products">
+                            {% for prod in pedido.productos.all %}
+                            <li>
+                                <span class="material-symbols-outlined"
+                                    style="font-size: 18px; color: var(--primary);">restaurant</span>
+                                {{ prod.nombre }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+
+                        {% if pedido.descripcion %}
+                        <div
+                            style="background: var(--surface-container); padding: 14px; border-radius: 12px; font-size: 14px; border: 1px solid var(--outline-variant); color: var(--on-surface-variant);">
+                            <strong style="color: var(--on-surface);"><span class="material-symbols-outlined"
+                                    style="font-size: 16px; vertical-align: middle;">speaker_notes</span>
+                                Notas:</strong> {{ pedido.descripcion }}
+                        </div>
+                        {% endif %}
+
+                        <div class="order-card-footer">
+                            <div class="order-total-display">
+                                <span
+                                    style="font-size: 11px; color: var(--on-surface-variant); font-weight: 700; display: block; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">Total</span>
+                                <strong style="font-size: 24px; color: var(--primary); font-weight: 800;">
+                                    S/. {{ pedido.get_total|floatformat:2 }}
+                                </strong>
+                            </div>
+
+                            <div class="order-actions-right"
+                                style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                {% if pedido.estado == 'COBRADO' %}
+                                <span
+                                    style="font-size: 13px; color: #166534; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; background-color: #dcfce7; padding: 6px 12px; border-radius: var(--radius-md); border: 1px solid #bbf7d0;">
+                                    <span class="material-symbols-outlined"
+                                        style="font-size: 18px; vertical-align: middle;">check_circle</span>
+                                    Cobrado (Propina: S/. {{ pedido.propina|floatformat:2 }})
+                                </span>
+                                {% elif pedido.estado == 'PAGADO' %}
+                                <span
+                                    style="font-size: 13px; color: #6b21a8; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; background-color: #f3e8ff; padding: 6px 12px; border-radius: var(--radius-md); border: 1px solid #d8b4fe;">
+                                    <span class="material-symbols-outlined"
+                                        style="font-size: 18px; vertical-align: middle;">qr_code_2</span>
+                                    Pagado con Yape (Propina: S/. {{ pedido.propina|floatformat:2 }})
+                                </span>
+                                {% elif pedido.estado == 'ENTREGADO' %}
+                                {% if is_history %}
+                                <span
+                                    style="font-size: 13px; color: #166534; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; background-color: #dcfce7; padding: 6px 12px; border-radius: var(--radius-md); border: 1px solid #bbf7d0;">
+                                    <span class="material-symbols-outlined"
+                                        style="font-size: 18px; vertical-align: middle;">check_circle</span>
+                                    Entregado
+                                </span>
+                                {% else %}
+                                <div style="display: inline-flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 0;">
+                                     <!-- Formulario de cobro en línea para el Mozo -->
+                                     <form onsubmit="handleCobrarSubmit(event)"
+                                         action="{% url 'update' pedido.id 'COBRADO' %}" method="POST"
+                                         style="display: inline-flex; gap: 12px; align-items: center; margin: 0; flex-wrap: wrap;">
+                                         {% csrf_token %}
+                                         <div
+                                             style="position: relative; display: flex; align-items: center; width: 110px;">
+                                             <span
+                                                 style="position: absolute; left: 8px; color: var(--on-surface-variant); font-size: 14px; font-weight: 700;">S/.</span>
+                                             <input type="number" id="propina-input-{{ pedido.id }}" name="propina"
+                                                 placeholder="Propina" min="0" step="0.01" value="0"
+                                                 style="padding: 10px 10px 10px 28px; border-radius: var(--radius-md); border: 1px solid var(--outline-variant); width: 100%; font-size: 14px; font-family: inherit; font-weight: 700; box-sizing: border-box;">
+                                         </div>
+                                         <button type="submit" class="btn-action-success">
+                                             <span class="material-symbols-outlined"
+                                                 style="font-size: 18px;">payments</span>
+                                             Cobrar
+                                         </button>
+                                     </form>
+                                     <button type="button" class="btn-action-primary"
+                                         onclick="solicitarYape({{ pedido.id }})">
+                                         <span class="material-symbols-outlined"
+                                             style="font-size: 18px;">qr_code_2</span>
+                                         Yape QR
+                                     </button>
+                                </div>
+                                {% endif %}
+                                {% elif pedido.estado == 'CANCELADO' %}
+                                <span
+                                    style="font-size: 13px; color: #991b1b; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; background-color: #fee2e2; padding: 6px 12px; border-radius: var(--radius-md); border: 1px solid #fca5a5;">
+                                    <span class="material-symbols-outlined"
+                                        style="font-size: 18px; vertical-align: middle;">cancel</span>
+                                    Cancelado
+                                </span>
+                                {% else %}
+                                {% if pedido.estado == 'LISTO' %}
+                                <a href="{% url 'update' pedido.id 'ENTREGADO' %}" class="btn-action-success">
+                                    <span class="material-symbols-outlined" style="font-size: 20px;">check_circle</span>
+                                    Entregar
+                                </a>
+                                {% elif pedido.estado == 'CREADO' or pedido.estado == 'PREPARACION' %}
+                                <span
+                                    style="font-size: 13px; color: var(--on-surface-variant); font-style: italic; font-weight: 600; margin-right: 8px; display: inline-flex; align-items: center; gap: 4px; background-color: var(--surface-container); padding: 6px 12px; border-radius: var(--radius-md);">
+                                    <span class="material-symbols-outlined"
+                                        style="font-size: 16px; animation: pulse 1.5s infinite;">restaurant</span>
+                                    En Cocina
+                                </span>
+                                {% endif %}
+                                <a href="{% url 'cancelar_pedido' pedido.id %}" class="btn-action-danger"
+                                    onclick="return confirm('¿Estás seguro de que deseas cancelar este pedido?');">
+                                    <span class="material-symbols-outlined" style="font-size: 20px;">cancel</span>
+                                    Cancelar
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div
+                        style="text-align: center; padding: 64px 24px; background: white; border-radius: var(--radius-lg); border: 2px dashed var(--outline-variant); color: var(--on-surface-variant);">
+                        <span class="material-symbols-outlined"
+                            style="font-size: 64px; margin-bottom: 16px; opacity: 0.5; color: var(--primary);">restaurant_menu</span>
+                        <h3 style="font-size: 20px; font-weight: 800; color: var(--on-surface); margin-bottom: 8px;">No
+                            hay pedidos activos</h3>
+                        <p style="font-size: 16px;">Las nuevas ordenes y sus estados aparecerán aquí.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="bottom-footer">
+            <div class="footer-stats">
+                <div class="footer-item">
+                    <div class="footer-icon red">
+                        <span class="material-symbols-outlined">restaurant</span>
+                    </div>
+                    <div>
+                        <p style="font-size: 14px; color: var(--on-surface-variant); margin: 0;">Ordenes Servidas Hoy
+                        </p>
+                        <h3 style="font-size: 24px; font-weight: 800; margin: 0; color: var(--on-surface);">
+                            {{total_servidas}}</h3>
+                    </div>
+                </div>
+
+                <div class="footer-item">
+                    <div class="footer-icon yellow">
+                        <span class="material-symbols-outlined">payments</span>
+                    </div>
+                    <div>
+                        <p style="font-size: 14px; color: var(--on-surface-variant); margin: 0;">Propinas Ganadas</p>
+                        <h3 style="font-size: 24px; font-weight: 800; margin: 0; color: var(--on-surface);">S/. {{ propinas_ganadas|default:0|floatformat:2 }}</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="shift-status">
+                <div>
+                    <h4 style="font-size: 16px; font-weight: 800; margin: 0; color: var(--on-surface);">Shift Status:
+                        Active</h4>
+                    <p style="font-size: 14px; color: var(--on-surface-variant); margin: 0;">Start: 08:00 AM</p>
+                </div>
+                <span class="status-dot"></span>
+            </div>
+        </footer>
+
+    </main>
+
+    <!-- ORDER MODAL -->
+    <div id="orderModal"
+        style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+        <div
+            style="background: white; border-radius: var(--radius-lg); padding: 32px; width: 100%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h2 style="font-size: 24px; font-weight: 800; color: var(--on-surface); margin: 0;">Nueva Orden</h2>
+                <button onclick="closeOrderModal()"
+                    style="background: transparent; border: none; cursor: pointer; color: var(--on-surface-variant); display: flex; align-items: center; justify-content: center;">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <form action="{% url 'create_pedido' %}" method="POST"
+                style="display: flex; flex-direction: column; gap: 16px;">
+                {% csrf_token %}
+
+                <!-- Cliente Field -->
+                <div>
+                    <label for="{{ form_pedido.cliente.id_for_label }}"
+                        style="display: block; font-size: 14px; font-weight: 700; color: var(--on-surface); margin-bottom: 6px;">Cliente
+                        (Opcional)</label>
+                    {{ form_pedido.cliente }}
+                    <p style="font-size: 11px; color: var(--on-surface-variant); margin-top: 4px;">Selecciona un cliente
+                        registrado o déjalo vacío para un invitado.</p>
+                </div>
+
+                <!-- Mesa Field -->
+                <div>
+                    <label for="{{ form_pedido.mesa.id_for_label }}"
+                        style="display: block; font-size: 14px; font-weight: 700; color: var(--on-surface); margin-bottom: 6px;">Mesa</label>
+                    {{ form_pedido.mesa }}
+                </div>
+
+                <!-- Productos Field (Checkboxes) -->
+                <div>
+                    <label
+                        style="display: block; font-size: 14px; font-weight: 700; color: var(--on-surface); margin-bottom: 8px;">Productos
+                        Disponibles</label>
+                    <div
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; max-h: 200px; overflow-y: auto; padding: 12px; background: var(--surface-container-low); border-radius: var(--radius-md); border: 1px solid var(--outline-variant);">
+                        {% for prod in form_pedido.fields.productos.queryset %}
+                        <label class="checkbox-card {% if not prod.disponible %}disabled-card{% endif %}">
+                            <input type="checkbox" name="productos" value="{{ prod.id }}" {% if not prod.disponible %}disabled{% endif %}>
+                            <span>
+                                {{ prod.nombre }}
+                                <small style="display: block; font-size: 11px; font-weight: bold; margin-top: 2px;">
+                                    {% if prod.disponible %}
+                                    S/. {{ prod.precio }}
+                                    {% else %}
+                                    [AGOTADO]
+                                    {% endif %}
+                                </small>
+                            </span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Descripcion Field -->
+                <div>
+                    <label for="{{ form_pedido.descripcion.id_for_label }}"
+                        style="display: block; font-size: 14px; font-weight: 700; color: var(--on-surface); margin-bottom: 6px;">Notas
+                        / Instrucciones Especiales</label>
+                    {{ form_pedido.descripcion }}
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px;">
+                    <button type="button" onclick="closeOrderModal()" class="btn-action-logout"
+                        style="background-color: #f3f4f6; color: var(--on-surface-variant); border: 1px solid var(--outline-variant);">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="btn-crear-pedido" class="btn-action-primary">
+                        Crear Pedido
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- YAPE QR MODAL -->
+    <div id="yapeModal"
+        style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(6px); transition: all 0.3s ease;">
+        <div
+            style="background: white; border-radius: 24px; padding: 32px; width: 100%; max-width: 400px; box-shadow: 0 20px 40px rgba(0,0,0,0.25); text-align: center; border: 1px solid var(--outline-variant); position: relative;">
+
+            <div
+                style="background-color: #742284; color: white; width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto; box-shadow: 0 8px 16px rgba(116,34,132,0.3);">
+                <span class="material-symbols-outlined" style="font-size: 36px;">qr_code_2</span>
+            </div>
+
+            <h2 style="font-size: 24px; font-weight: 800; color: #742284; margin-bottom: 8px;">Escanea con Yape</h2>
+            <p style="font-size: 14px; color: var(--on-surface-variant); margin-bottom: 20px; font-weight: 600;">
+                Escanea el código QR dinámico para realizar el pago al instante.
+            </p>
+
+            <!-- QR Target Area -->
+            <div id="yapeQrContainer"
+                style="display: flex; align-items: center; justify-content: center; min-height: 200px; border-radius: var(--radius-lg); background: #fdfafd; padding: 16px; border: 2px dashed #d8b4fe; margin-bottom: 20px; position: relative;">
+                <!-- Spinner placeholder -->
+                <div id="yapeSpinner" class="yape-loading-spinner"
+                    style="border: 4px solid rgba(116, 34, 132, 0.1); width: 48px; height: 48px; border-radius: 50%; border-left-color: #742284; animation: spin 1s linear infinite; box-sizing: border-box;">
+                </div>
+                <img id="yapeQrImage" src="" alt="Yape QR"
+                    style="display: none; width: 100%; max-width: 200px; height: auto; border-radius: var(--radius-md); animation: fadeIn 0.4s ease-out;" />
+            </div>
+
+            <!-- Payment ID Display -->
+            <div
+                style="background: var(--surface-container-low); padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--outline-variant); font-size: 12px; font-family: monospace; color: var(--on-surface-variant); margin-bottom: 24px; word-break: break-all;">
+                <strong>ID Pago:</strong> <span id="yapePaymentId">Generando...</span>
+            </div>
+
+            <!-- Modal Actions -->
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button type="button" onclick="closeYapeModal()" class="btn-action-logout"
+                    style="background-color: #f3f4f6; color: var(--on-surface-variant); border: 1px solid var(--outline-variant); width: 100%; font-size: 14px; padding: 12px;">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openOrderModal() {
+            const modal = document.getElementById('orderModal');
+            modal.style.display = 'flex';
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                modal.style.transition = 'opacity 0.2s ease-out';
+            }, 10);
+        }
+
+        function closeOrderModal() {
+            const modal = document.getElementById('orderModal');
+            modal.style.opacity = '0';
+            setTimeout(() => modal.style.display = 'none', 200);
+        }
+
+        function openOrderModalWithMesa(mesaNum) {
+            openOrderModal();
+            const selectMesa = document.querySelector('select[name="mesa"]');
+            if (selectMesa) {
+                selectMesa.value = mesaNum;
+            }
+        }
+
+        function handleTableClick(mesaNum, ocupada) {
+            if (!ocupada) {
+                openOrderModalWithMesa(mesaNum);
+            } else {
+                // Find order card for this mesa and scroll with highlight
+                const cards = document.querySelectorAll('.order-card');
+                let found = false;
+                for (const card of cards) {
+                    const h3 = card.querySelector('h3');
+                    if (h3 && h3.textContent.trim().toLowerCase().includes('mesa ' + mesaNum)) {
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        card.classList.add('highlight-animation');
+                        setTimeout(() => {
+                            card.classList.remove('highlight-animation');
+                        }, 2200);
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    alert(`La Mesa ${mesaNum} está ocupada, pero no tienes pedidos activos creados por ti en ella.`);
+                }
+            }
+        }
+
+        let yapePollInterval = null;
+
+        function showSuccessToast(callback) {
+            const toast = document.getElementById('pagoExitosoToast');
+            if (!toast) {
+                if (callback) callback();
+                return;
+            }
+            toast.style.display = 'flex';
+            toast.className = 'toast-slide-down';
+
+            setTimeout(() => {
+                toast.className = 'toast-slide-up';
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                    if (callback) callback();
+                }, 300);
+            }, 1000);
+        }
+
+        function handleCobrarSubmit(event) {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const formData = new FormData(form);
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            })
+                .then(response => {
+                    if (response.ok) {
+                        showSuccessToast(() => {
+                            window.location.reload();
+                        });
+                    } else {
+                        alert('Error al realizar el cobro');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Error al realizar el cobro');
+                });
+        }
+
+        function openYapeModal() {
+            const modal = document.getElementById('yapeModal');
+            modal.style.display = 'flex';
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                modal.style.transition = 'opacity 0.2s ease-out';
+            }, 10);
+
+            // Reset to generating state
+            document.getElementById('yapeSpinner').style.display = 'block';
+            document.getElementById('yapeQrImage').style.display = 'none';
+            document.getElementById('yapePaymentId').textContent = 'Generando...';
+        }
+
+        function closeYapeModal() {
+            const modal = document.getElementById('yapeModal');
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 200);
+
+            if (yapePollInterval) {
+                clearInterval(yapePollInterval);
+                yapePollInterval = null;
+            }
+        }
+
+        function solicitarYape(pedidoId) {
+            const propinaInput = document.getElementById(`propina-input-${pedidoId}`);
+            const propinaVal = propinaInput ? parseFloat(propinaInput.value) || 0 : 0;
+
+            openYapeModal();
+
+            fetch('/mozo/pedido/generar-qr/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    pedido_id: pedidoId,
+                    propina: propinaVal
+                })
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error('Error al generar el QR de Yape');
+                    return response.json();
+                })
+                .then(data => {
+                    const img = document.getElementById('yapeQrImage');
+                    img.src = data.qr_url;
+                    img.style.display = 'block';
+                    document.getElementById('yapeSpinner').style.display = 'none';
+                    document.getElementById('yapePaymentId').textContent = data.payment_id;
+
+                    // Start polling every 3 seconds
+                    if (yapePollInterval) clearInterval(yapePollInterval);
+                    yapePollInterval = setInterval(() => {
+                        verificarEstadoBBDD(pedidoId);
+                    }, 3000);
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert('No se pudo establecer conexión con la pasarela de Yape. Reintente por favor.');
+                    closeYapeModal();
+                });
+        }
+
+        function verificarEstadoBBDD(pedidoId) {
+            fetch(`/mozo/pedido/${pedidoId}/estado/`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Error de conexión');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.estado === 'PAGADO') {
+                        closeYapeModal();
+                        showSuccessToast(() => {
+                            window.location.reload();
+                        });
+                    }
+                })
+                .catch(err => console.error('Error al verificar estado:', err));
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnCrear = document.getElementById('btn-crear-pedido');
+            const checkboxes = document.querySelectorAll('input[name="productos"]');
+
+            function updateSubmitButtonState() {
+                const isAnyChecked = Array.from(checkboxes).some(cb => cb.checked);
+                btnCrear.disabled = !isAnyChecked;
+            }
+
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', updateSubmitButtonState);
+            });
+
+            // Inicializar el estado al cargar la página
+            updateSubmitButtonState();
+        });
+    </script>
+</body>
+
+</html>
